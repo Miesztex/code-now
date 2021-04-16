@@ -39,42 +39,55 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.serveCommand = void 0;
-var commander_1 = require("commander");
-var local_api_1 = require("local-api");
+exports.createCellsRouter = void 0;
+var express_1 = __importDefault(require("express"));
+var promises_1 = __importDefault(require("fs/promises"));
 var path_1 = __importDefault(require("path"));
-var isProduction = process.env.NODE_ENV === 'production';
-exports.serveCommand = new commander_1.Command()
-    .command('serve [filename]') // [] - optional
-    .description('Open a file for editing')
-    .option('-p, --port <number>', 'port to run server on', '4005') // <> - required
-    .action(function (filename, options) {
-    if (filename === void 0) { filename = 'notebook.js'; }
-    return __awaiter(void 0, void 0, void 0, function () {
-        var dir, basename, err_1;
+var createCellsRouter = function (filename, dir) {
+    var router = express_1.default.Router();
+    router.use(express_1.default.json());
+    var fullPath = path_1.default.join(dir, filename);
+    // === READ CELLS DATA ===
+    router.get('/cells', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+        var result, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    dir = path_1.default.join(process.cwd(), path_1.default.dirname(filename));
-                    basename = path_1.default.basename(filename);
-                    return [4 /*yield*/, local_api_1.serve(parseInt(options.port), basename, dir, !isProduction)];
+                    _a.trys.push([0, 2, , 6]);
+                    return [4 /*yield*/, promises_1.default.readFile(fullPath, { encoding: 'utf-8' })];
                 case 1:
-                    _a.sent(); // async fn
-                    console.log("\n\t\t\t\tOpened " + filename + ". Navigate to https://localhost:" + options.port + " to edit.\n\t\t\t\t");
-                    return [3 /*break*/, 3];
+                    result = _a.sent();
+                    res.send(JSON.parse(result));
+                    return [3 /*break*/, 6];
                 case 2:
                     err_1 = _a.sent();
-                    if (err_1.code === 'EADDRINUSE') {
-                        console.log('Port is in use. Try another port');
-                    }
-                    else {
-                        console.log('Problem appeared:', err_1.message);
-                    }
-                    process.exit(1);
-                    return [3 /*break*/, 3];
-                case 3: return [2 /*return*/];
+                    if (!(err_1.code === 'ENOENT')) return [3 /*break*/, 4];
+                    return [4 /*yield*/, promises_1.default.writeFile(fullPath, '[]', 'utf-8')];
+                case 3:
+                    _a.sent();
+                    res.send([]);
+                    return [3 /*break*/, 5];
+                case 4: throw err_1;
+                case 5: return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
             }
         });
-    });
-});
+    }); });
+    // === SAVE CELLS DATA ===
+    router.post('/cells', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+        var cells;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    cells = req.body.cells;
+                    return [4 /*yield*/, promises_1.default.writeFile(fullPath, JSON.stringify(cells), 'utf-8')];
+                case 1:
+                    _a.sent();
+                    res.send({ status: 'ok' });
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    return router;
+};
+exports.createCellsRouter = createCellsRouter;

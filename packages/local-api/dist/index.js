@@ -1,9 +1,40 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.serve = void 0;
-var serve = function (port, filename, dir) {
-    console.log('server is listening on ', port);
-    console.log('saving in: ', filename);
-    console.log('on dir:', dir);
+var express_1 = __importDefault(require("express"));
+var http_proxy_middleware_1 = require("http-proxy-middleware");
+var path_1 = __importDefault(require("path"));
+var cells_1 = require("./routes/cells");
+var serve = function (port, filename, dir, useProxy) {
+    var app = express_1.default();
+    // ====================
+    // LOCAL CLIENT
+    // ====================
+    if (useProxy) {
+        // serving from cra (development mode)
+        app.use(http_proxy_middleware_1.createProxyMiddleware({
+            target: 'http://localhost:3000',
+            ws: true,
+            logLevel: 'silent',
+        }));
+    }
+    else {
+        // serving react assets from dependecies (production mode)
+        var packagePath = require.resolve('local-client/build/index.html');
+        app.use(express_1.default.static(path_1.default.dirname(packagePath)));
+    }
+    // ====================
+    // ROUTER
+    // ====================
+    app.use(cells_1.createCellsRouter(filename, dir));
+    // ====================
+    // LISTENING
+    // ====================
+    return new Promise(function (resolve, reject) {
+        app.listen(port, resolve).on('error', reject);
+    });
 };
 exports.serve = serve;
