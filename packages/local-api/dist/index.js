@@ -11,6 +11,10 @@ var cells_1 = require("./routes/cells");
 var serve = function (port, filename, dir, useProxy) {
     var app = express_1.default();
     // ====================
+    // ROUTER
+    // ====================
+    app.use(cells_1.createCellsRouter(filename, dir));
+    // ====================
     // LOCAL CLIENT
     // ====================
     if (useProxy) {
@@ -26,10 +30,6 @@ var serve = function (port, filename, dir, useProxy) {
         var packagePath = require.resolve('local-client/build/index.html');
         app.use(express_1.default.static(path_1.default.dirname(packagePath)));
     }
-    // ====================
-    // ROUTER
-    // ====================
-    app.use(cells_1.createCellsRouter(filename, dir));
     // ====================
     // LISTENING
     // ====================

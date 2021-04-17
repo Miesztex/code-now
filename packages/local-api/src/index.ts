@@ -12,6 +12,11 @@ export const serve = (
 	const app = express();
 
 	// ====================
+	// ROUTER
+	// ====================
+	app.use(createCellsRouter(filename, dir));
+
+	// ====================
 	// LOCAL CLIENT
 	// ====================
 	if (useProxy) {
@@ -28,11 +33,6 @@ export const serve = (
 		const packagePath = require.resolve('local-client/build/index.html');
 		app.use(express.static(path.dirname(packagePath)));
 	}
-
-	// ====================
-	// ROUTER
-	// ====================
-	app.use(createCellsRouter(filename, dir));
 
 	// ====================
 	// LISTENING

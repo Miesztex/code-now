@@ -4,6 +4,7 @@ import path from 'path';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+// handle serve command
 export const serveCommand = new Command()
 	.command('serve [filename]') // [] - optional
 	.description('Open a file for editing')
@@ -11,9 +12,12 @@ export const serveCommand = new Command()
 	.action(
 		async (filename: string = 'notebook.js', options: { port: string }) => {
 			try {
-				const dir = path.join(process.cwd(), path.dirname(filename));
+				// localize saving file from command
+				const dir = path.join(process.cwd(), path.dirname(filename)); // default(cli->dist)
 				const basename = path.basename(filename);
-				await serve(parseInt(options.port), basename, dir, !isProduction); // async fn
+
+				// serve logic (local-api)
+				await serve(parseInt(options.port), basename, dir, !isProduction);
 
 				console.log(`
 				Opened ${filename}. Navigate to https://localhost:${options.port} to edit.
